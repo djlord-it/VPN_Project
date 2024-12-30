@@ -1,18 +1,18 @@
 #include "VPNClient.hpp"
+#include "Logger.hpp"
 #include "TunnelPacket.hpp"
-#include <iostream>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <cstring>
 
 VPNClient::VPNClient(const std::string &serverIP, int serverPort)
-    : serverIP_(serverIP), serverPort_(serverPort), sock_(-1), ssl_(nullptr)
+    : serverIP_(serverIP), serverPort_(serverPort),
+      sock_(-1), ssl_(nullptr)
 {
     encHandler_.initClientContext();
-
-    // Create socket
     sock_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ < 0) {
-        perror("[Client] Socket creation failed");
+        Log("Socket creation failed", LogLevel::ERROR);
     }
 
     serverAddr_.sin_family = AF_INET;
@@ -33,40 +33,40 @@ VPNClient::~VPNClient()
 
 bool VPNClient::connectToServer()
 {
-    if (connect(sock_, (struct sockaddr *)&serverAddr_, sizeof(serverAddr_)) < 0) {
-        perror("[Client] Connection failed");
+    if (connect(sock_, (struct sockaddr*)&serverAddr_, sizeof(serverAddr_)) < 0) {
+        Log("Connection failed", LogLevel::ERROR);
         return false;
     }
 
     ssl_ = encHandler_.createSSL(sock_);
     if (!ssl_) {
-        std::cerr << "[Client] Failed to create SSL.\n";
+        Log("Failed to create SSL for client", LogLevel::ERROR);
         return false;
     }
 
     if (SSL_connect(ssl_) <= 0) {
-        std::cerr << "[Client] SSL connect failed.\n";
+        Log("SSL connect failed", LogLevel::ERROR);
+        ERR_print_errors_fp(stderr);
         return false;
     }
+    Log("TLS handshake successful with server", LogLevel::INFO);
 
-    std::cout << "[Client] Connected and TLS handshake successful.\n";
     return true;
 }
 
 bool VPNClient::sendTunnelPacket(const char* data)
 {
     if (!ssl_) {
-        std::cerr << "[Client] SSL is not established.\n";
+        Log("SSL not established, cannot send packet", LogLevel::ERROR);
         return false;
     }
 
-    TunnelPacket packet{};
-    packet.srcPort  = 55555;  // Example
-    packet.destPort = 80;     // Example
-    packet.srcIP    = 0x7F000001; // 127.0.0.1 in hex
-    packet.destIP   = 0x7F000001; // 127.0.0.1 in hex
-    // Copy data into payload
-    strncpy(packet.payload, data, TunnelPacket::MAX_PAYLOAD_SIZE - 1);
+    TunnelPacket packet;
+    packet.srcPort  = 12345;  // example
+    packet.destPort = 80;     // example
+    packet.srcIP    = 0x7F000001; // 127.0.0.1
+    packet.destIP   = 0x7F000001;
+    strncpy(packet.payload, data, sizeof(packet.payload) - 1);
 
     int sent = SSL_write(ssl_, &packet, sizeof(packet));
     return (sent == sizeof(packet));

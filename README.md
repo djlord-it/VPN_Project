@@ -1,184 +1,239 @@
-# VPN Project Exploration
+# VPN Project: A Secure Communication System 🌐🔒
 
-This repository contains a minimal proof-of-concept VPN server and client written in C++. I started this project to learn how secure connections and packet forwarding can work under the hood—both from a code perspective and from a networking standpoint. The result is not a fully production-ready VPN, but rather an educational sandbox to explore:
-
-- How to set up a **TCP socket** for a server and a client.
-- How to **encrypt** communications using **OpenSSL**.
-- How to structure **C++ classes** for server, client, and encryption handling.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Project Structure](#project-structure)
-- [Installation and Compilation](#installation-and-compilation)
-- [How to Run](#how-to-run)
-- [Testing](#testing)
-- [License](#license)
+Welcome to the **VPN Project**! This project provides a robust, secure, and efficient implementation of a Virtual Private Network (VPN). Designed with modern **C++** and powered by **OpenSSL**, it facilitates encrypted communication between clients and servers. This VPN is ideal for exploring secure communication, understanding VPN internals, or even building customized network solutions.
 
 ---
 
-## Overview
+## Key Features 
 
-Initially, the idea was to discover what it takes to build a simple VPN from scratch, or at least the building blocks:
+### **1. Secure Communication**
+Leverages OpenSSL to establish TLS-encrypted channels, ensuring:
+- **Confidentiality:** Data remains unreadable to unauthorized parties.
+- **Integrity:** Protects data from being altered during transmission.
+- **Authentication:** Ensures communication occurs between verified entities.
 
-1. **TCP Sockets**: Basic networking to accept client connections.
-2. **TLS/SSL Encryption**: Secure data exchange using OpenSSL.
-3. **Traffic Forwarding**: (In a more advanced setup) forward packets to the actual destination via a TUN/TAP interface.
+### **2. Cross-Platform Compatibility**
+The VPN works seamlessly on **Linux**, **macOS**, and within **Docker containers**, providing a versatile environment for deployment and testing.
 
-The code here is intentionally **minimal** and focuses on:
+### **3. Easy Configuration**
+All server and client settings are managed via a simple JSON file (`config.json`), making it straightforward to customize and deploy.
 
-- A **VPNServer** class that listens for connections on a chosen port and performs a TLS handshake.
-- A **VPNClient** class that connects to the server, negotiates encryption, and sends a simple “TunnelPacket”.
-- An **EncryptionHandler** that initializes the OpenSSL context and handles certificate loading.
+### **4. Multi-Client Support**
+Built with threading to efficiently manage multiple client connections simultaneously, ensuring high scalability.
 
-**Disclaimer**: This is a learning project. It is **not** meant to replace a production VPN solution like OpenVPN, WireGuard, or IPSec.
+### **5. Custom Data Encapsulation**
+Implements a `TunnelPacket` structure to encapsulate and manage transmitted data, ensuring flexibility and efficiency in handling packetized information.
+
+### **6. Logging Utility**
+A lightweight logging system (`Logger.hpp`) is included for real-time tracking of server and client activities, helping with debugging and monitoring.
+
+### **7. Docker Support**
+Ready-to-use **Dockerfile** and setup instructions make deployment easy in containerized environments, reducing dependencies and configuration overhead.
+
+### **8. Educational Exploration**
+This project serves as an educational sandbox to explore foundational VPN concepts, including:
+- Setting up **TCP sockets** for server-client communication.
+- Implementing **TLS/SSL encryption** using OpenSSL.
+- Structuring **C++ classes** for modular server, client, and encryption handling.
+- Exploring the basics of **packet forwarding** (TUN/TAP interfaces).
 
 ---
 
-## Project Structure
+## Project Structure 📂
 
+The project is organized to ensure clarity and modularity:
 ```
 VPN_Project/
-├── CMakeLists.txt
-├── include/
-│   ├── VPNServer.hpp
-│   ├── VPNClient.hpp
-│   ├── EncryptionHandler.hpp
-│   └── TunnelPacket.hpp
-├── src/
-│   ├── VPNServer.cpp
-│   ├── VPNClient.cpp
-│   ├── EncryptionHandler.cpp
-│   ├── main_server.cpp
-│   └── main_client.cpp
-└── build/         // Where we build files (added to .gitignore typically)
+├── CMakeLists.txt           # Build system configuration
+├── config.json              # Configuration file for server and client
+├── Dockerfile               # Optional Docker setup
+├── include/                 # Header files
+│   ├── EncryptionHandler.hpp   # Handles encryption and decryption
+│   ├── VPNServer.hpp           # Server functionality
+│   ├── VPNClient.hpp           # Client functionality
+│   └── TunnelPacket.hpp        # Custom packet structure
+├── src/                     # Source files
+│   ├── EncryptionHandler.cpp  # Encryption implementation
+│   ├── VPNServer.cpp          # Server implementation
+│   ├── VPNClient.cpp          # Client implementation
+│   ├── main_server.cpp        # Entry point for the server
+│   ├── main_client.cpp        # Entry point for the client
+│   └── Logger.hpp             # Logging utility
+└── build/                    # Build directory (ignored in version control)
+└── tests/                   # Unit tests
+    ├── CMakeLists.txt         # Build configuration for tests
+    └── test_vpn.cpp           # Test cases for VPN functionality
 ```
-
-- **VPNServer**: Creates a listening socket, accepts clients, performs SSL handshake, receives a “tunnel” packet.
-- **VPNClient**: Connects to the server, negotiates TLS, sends a test packet.
-- **EncryptionHandler**: Wraps OpenSSL context creation (both server and client side).
-- **TunnelPacket**: A small struct to represent tunneled data (in practice, you’d read from a TUN interface).
 
 ---
 
-## Installation and Compilation
+## Getting Started 🚀
 
 ### Prerequisites
+To build and run this project, ensure the following tools are installed:
 
-- A C++ compiler that supports at least **C++17**.
-- **CMake** (version >= 3.10).
-- **OpenSSL** development headers (libssl-dev on Debian/Ubuntu/Mint).
+#### **1. C++ Compiler**
+- Requires a compiler with **C++17** support, such as:
+   - `g++` (Linux)
+   - `clang++` (macOS)
 
-On Debian/Ubuntu/Mint, install dependencies:
+#### **2. OpenSSL Library**
+- Necessary for encryption. Install it using:
+  ```bash
+  # Linux
+  sudo apt install libssl-dev
 
+  # macOS
+  brew install openssl
+  ```
+
+#### **3. CMake**
+- For managing the build process. Install it using:
+  ```bash
+  # Linux
+  sudo apt install cmake
+
+  # macOS
+  brew install cmake
+  ```
+
+#### **4. Docker** (Optional)
+- For containerized deployment and testing. Install Docker from [Docker's official website](https://www.docker.com/).
+
+#### **5. OpenSSL Certificates**
+Generate a self-signed certificate and key for testing:
 ```bash
-sudo apt-get update
-sudo apt-get install cmake build-essential libssl-dev
+openssl req -x509 -newkey rsa:2048 -nodes \
+    -keyout server.key -out server.crt -days 365
 ```
 
-### Build Steps
+---
 
-1. Clone or download this repository.
+### Building the Project
 
-2. Generate a self-signed certificate and key for testing:
+#### **Step 1: Clone the Repository**
+```bash
+git clone https://github.com/djlord-it/VPN_Project.git
+cd VPN_Project
+```
 
-    ```bash
-    openssl req -x509 -newkey rsa:2048 -nodes \
-        -keyout server.key -out server.crt -days 365
-    ```
+#### **Step 2: Create a Build Directory**
+```bash
+mkdir build
+cd build
+```
 
-   When prompted, fill out the certificate info (Country, State, etc.). This produces two files: `server.key` and `server.crt`.
+#### **Step 3: Build with CMake**
+```bash
+cmake ..
+make
+```
 
-3. Create and enter the build directory:
+If OpenSSL is in a non-standard location, specify its path:
+```bash
+cmake -DOPENSSL_ROOT_DIR=/path/to/openssl ..
+```
 
-    ```bash
-    mkdir build
-    cd build
-    ```
-
-4. Run CMake:
-
-    ```bash
-    cmake ..
-    ```
-
-   If OpenSSL is in a non-standard location, you may need to specify its path:
-
-    ```bash
-    cmake -DOPENSSL_ROOT_DIR=/path/to/openssl ..
-    ```
-
-5. Compile:
-
-    ```bash
-    make
-    ```
-
-   This produces two executables: `server` and `client`.
+This produces two executables: `server` and `client`.
 
 ---
 
-## How to Run
+### Running the Server and Client
 
-1. Move or copy `server.crt` and `server.key` into the same folder as the built executables (usually `build/`), or adjust your code to point to their absolute paths.
+#### **1. Start the Server**
+```bash
+./server
+```
+- The server reads its configuration from `config.json` and begins listening for client connections.
 
-2. Run the server in one terminal:
+#### **2. Run the Client**
+```bash
+./client
+```
+- The client connects to the server and transmits a test packet for verification.
 
-    ```bash
-    ./server
-    ```
+#### Expected Output
+- **Server Logs:**
+```plaintext
+[Server] Listening on port 8080...
+[Server] Client connected!
+[Server] TLS handshake successful.
+[Server] Received packet of size ...
+[Server] Payload: Hello from VPNClient!
+```
 
-   You should see:
-
-    ```
-    [Server] Listening on port 8080...
-    ```
-
-3. Run the client in another terminal (on the same machine for now):
-
-    ```bash
-    ./client
-    ```
-
-   You should see:
-
-    ```
-    [Client] Connected and TLS handshake successful.
-    [Client] Packet sent successfully.
-    ```
-
-   Server logs:
-
-    ```
-    [Server] Client connected!
-    [Server] TLS handshake successful.
-    [Server] Received packet of size ...
-    [Server] Payload: Hello from VPNClient!
-    ```
-
-   That confirms a basic encrypted handshake and a single test message exchange.
+- **Client Logs:**
+```plaintext
+[Client] Connected and TLS handshake successful.
+[Client] Packet sent successfully.
+```
 
 ---
 
-## Testing
+## Docker Setup 🐳
+
+Deploy the VPN using Docker for simplified setup and isolated testing.
+
+### **Building the Docker Image**
+```bash
+docker build -t vpn_server .
+```
+
+### **Running the Server in a Container**
+```bash
+docker run -d -p 8080:8080 --name vpn_server_instance vpn_server
+```
+
+### **Running the Client in a Container**
+```bash
+docker run --network host --name vpn_client_instance vpn_client
+```
+
+---
+
+## Testing 🧪
 
 ### Local Testing
-
-- **Wireshark**: If you want to see encrypted packets, run Wireshark on `lo` (or `eth0` if you’re bridging between machines). You’ll see TLS traffic, not plain text.
+- Use **Wireshark** to observe TLS-encrypted packets. Monitor traffic on the `lo` or `eth0` interface.
 
 ### Cross-Machine Testing
-
-- Put the server on one machine (e.g., Linux Mint) and the client on another (e.g., macOS).
-- In the `VPNClient.cpp` code, change `127.0.0.1` to the IP address of the server machine.
-- Ensure that:
-    - The server’s firewall/iptables allows incoming connections on port 8080.
-    - You can reach the server machine over the network.
+- Run the server on one machine and the client on another.
+- Update `VPNClient.cpp` to connect to the server's IP.
+- Ensure the server's firewall allows incoming traffic on the configured port (e.g., 8080).
 
 ---
 
-## License
+## Configuration ⚙️
 
-This project is provided as-is, without warranty. You’re free to use it for educational or experimental purposes. For anything production-grade, consider well-established VPN projects.
+The VPN's behavior is controlled via `config.json`:
+```json
+{
+  "server": {
+    "ip": "0.0.0.0",
+    "port": 8080
+  },
+  "certificates": {
+    "cert": "server.crt",
+    "key": "server.key"
+  }
+}
+```
+
+### Configuration Options
+- **`server.ip`**: The IP address the server binds to. Use `0.0.0.0` for all interfaces.
+- **`server.port`**: Port number for the server to listen on.
+- **`certificates.cert`**: Path to the server's SSL certificate.
+- **`certificates.key`**: Path to the server's private key.
 
 ---
 
+## Contributing 🤝
+
+We welcome contributions to improve the project! You can contribute by:
+- Fixing bugs.
+- Adding new features.
+- Enhancing documentation.
+
+Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/djlord-it/VPN_Project).
+
+---

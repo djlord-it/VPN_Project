@@ -2,6 +2,7 @@
 
 #include <string>
 #include <netinet/in.h>
+#include <openssl/ssl.h>
 #include "EncryptionHandler.hpp"
 
 class VPNClient {

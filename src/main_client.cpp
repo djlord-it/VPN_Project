@@ -1,18 +1,22 @@
-#include "VPNClient.hpp"
 #include <iostream>
+#include "VPNClient.hpp"
+#include "Logger.hpp"
 
-int main()
-{
-    VPNClient client("127.0.0.1", 8080);
+int main() {
+    // For simplicity, hard-code or load from JSON
+    std::string serverIP = "127.0.0.1";
+    int serverPort = 8080;
+
+    VPNClient client(serverIP, serverPort);
     if (!client.connectToServer()) {
+        Log("Failed to connect to the server", LogLevel::ERROR);
         return -1;
     }
 
-    // Send some data
-    if (client.sendTunnelPacket("Hello from VPNClient!")) {
-        std::cout << "[Client] Packet sent successfully.\n";
+    if (client.sendTunnelPacket("Hello client!")) {
+        Log("Packet sent successfully", LogLevel::INFO);
     } else {
-        std::cerr << "[Client] Failed to send packet.\n";
+        Log("Failed to send packet", LogLevel::ERROR);
     }
 
     return 0;

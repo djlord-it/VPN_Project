@@ -9,13 +9,12 @@ public:
     EncryptionHandler();
     ~EncryptionHandler();
 
-    // Server side initialization
+    // Server side
     bool initServerContext(const std::string &certFile, const std::string &keyFile);
 
-    // Client side initialization
+    // Client side
     bool initClientContext();
 
-    // Create SSL
     SSL* createSSL(int socketFD);
 
     SSL_CTX* getContext() const { return ctx_; }

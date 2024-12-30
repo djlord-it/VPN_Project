@@ -1,5 +1,7 @@
 #pragma once
+
 #include <cstdint>
+#include <cstring>
 
 struct TunnelPacket {
     uint16_t srcPort;
@@ -9,4 +11,8 @@ struct TunnelPacket {
 
     static constexpr size_t MAX_PAYLOAD_SIZE = 1024;
     char payload[MAX_PAYLOAD_SIZE];
+
+    TunnelPacket() : srcPort(0), destPort(0), srcIP(0), destIP(0) {
+        std::memset(payload, 0, MAX_PAYLOAD_SIZE);
+    }
 };
