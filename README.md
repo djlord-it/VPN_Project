@@ -13,7 +13,6 @@ This repository contains a minimal proof-of-concept VPN server and client writte
 - [Installation and Compilation](#installation-and-compilation)
 - [How to Run](#how-to-run)
 - [Testing](#testing)
-- [Future Enhancements](#future-enhancements)
 - [License](#license)
 
 ---
